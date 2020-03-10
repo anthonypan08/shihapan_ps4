@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/anthony/Desktop/shihapan_ps4/src/data_loader.cpp
+gtsam/slam/dataset.h
+-
+gtsam/slam/BetweenFactor.h
+-
+gtsam/slam/PriorFactor.h
+-
+gtsam/nonlinear/GaussNewtonOptimizer.h
+-
+gtsam/slam/PriorFactor.h
+-
+gtsam/geometry/Pose2.h
+-
+iostream
+-
+fstream
+-
+string
+-
+
