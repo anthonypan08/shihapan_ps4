@@ -241,6 +241,7 @@ CMakeFiles/data_loader.dir/src/data_loader.cpp.o
  /usr/local/include/eigen3/Eigen/src/plugins/MatrixCwiseBinaryOps.h
  /usr/local/include/eigen3/Eigen/src/plugins/MatrixCwiseUnaryOps.h
  /usr/local/include/eigen3/Eigen/src/plugins/ReshapedMethods.h
+ /usr/local/include/gtsam/base/ConcurrentMap.h
  /usr/local/include/gtsam/base/FastDefaultAllocator.h
  /usr/local/include/gtsam/base/FastList.h
  /usr/local/include/gtsam/base/FastMap.h
@@ -281,6 +282,9 @@ CMakeFiles/data_loader.dir/src/data_loader.cpp.o
  /usr/local/include/gtsam/geometry/SOn.h
  /usr/local/include/gtsam/geometry/Unit3.h
  /usr/local/include/gtsam/global_includes.h
+ /usr/local/include/gtsam/inference/BayesTree.h
+ /usr/local/include/gtsam/inference/BayesTreeCliqueBase.h
+ /usr/local/include/gtsam/inference/Conditional.h
  /usr/local/include/gtsam/inference/EliminateableFactorGraph.h
  /usr/local/include/gtsam/inference/Factor.h
  /usr/local/include/gtsam/inference/FactorGraph-inst.h
@@ -294,6 +298,10 @@ CMakeFiles/data_loader.dir/src/data_loader.cpp.o
  /usr/local/include/gtsam/inference/VariableSlots.h
  /usr/local/include/gtsam/linear/ConjugateGradientSolver.h
  /usr/local/include/gtsam/linear/Errors.h
+ /usr/local/include/gtsam/linear/GaussianBayesNet.h
+ /usr/local/include/gtsam/linear/GaussianBayesTree.h
+ /usr/local/include/gtsam/linear/GaussianConditional-inl.h
+ /usr/local/include/gtsam/linear/GaussianConditional.h
  /usr/local/include/gtsam/linear/GaussianFactor.h
  /usr/local/include/gtsam/linear/GaussianFactorGraph.h
  /usr/local/include/gtsam/linear/HessianFactor-inl.h
@@ -306,8 +314,15 @@ CMakeFiles/data_loader.dir/src/data_loader.cpp.o
  /usr/local/include/gtsam/linear/Scatter.h
  /usr/local/include/gtsam/linear/SubgraphBuilder.h
  /usr/local/include/gtsam/linear/SubgraphSolver.h
+ /usr/local/include/gtsam/linear/VectorValues.h
  /usr/local/include/gtsam/linear/linearExceptions.h
+ /usr/local/include/gtsam/nonlinear/DoglegOptimizerImpl.h
  /usr/local/include/gtsam/nonlinear/GaussNewtonOptimizer.h
+ /usr/local/include/gtsam/nonlinear/ISAM2.h
+ /usr/local/include/gtsam/nonlinear/ISAM2Clique.h
+ /usr/local/include/gtsam/nonlinear/ISAM2Params.h
+ /usr/local/include/gtsam/nonlinear/ISAM2Result.h
+ /usr/local/include/gtsam/nonlinear/ISAM2UpdateParams.h
  /usr/local/include/gtsam/nonlinear/NonlinearFactor.h
  /usr/local/include/gtsam/nonlinear/NonlinearFactorGraph.h
  /usr/local/include/gtsam/nonlinear/NonlinearOptimizer.h

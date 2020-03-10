@@ -240,6 +240,7 @@ CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/eigen3/Eige
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/eigen3/Eigen/src/plugins/MatrixCwiseBinaryOps.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/eigen3/Eigen/src/plugins/MatrixCwiseUnaryOps.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/eigen3/Eigen/src/plugins/ReshapedMethods.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/base/ConcurrentMap.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/base/FastDefaultAllocator.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/base/FastList.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/base/FastMap.h
@@ -280,6 +281,9 @@ CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/geome
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/geometry/SOn.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/geometry/Unit3.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/global_includes.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/inference/BayesTree.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/inference/BayesTreeCliqueBase.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/inference/Conditional.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/inference/EliminateableFactorGraph.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/inference/Factor.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/inference/FactorGraph-inst.h
@@ -293,6 +297,10 @@ CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/infer
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/inference/VariableSlots.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/ConjugateGradientSolver.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/Errors.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/GaussianBayesNet.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/GaussianBayesTree.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/GaussianConditional-inl.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/GaussianConditional.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/GaussianFactor.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/GaussianFactorGraph.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/HessianFactor-inl.h
@@ -305,8 +313,15 @@ CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linea
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/Scatter.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/SubgraphBuilder.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/SubgraphSolver.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/VectorValues.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/linear/linearExceptions.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/nonlinear/DoglegOptimizerImpl.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/nonlinear/GaussNewtonOptimizer.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/nonlinear/ISAM2.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/nonlinear/ISAM2Clique.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/nonlinear/ISAM2Params.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/nonlinear/ISAM2Result.h
+CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/nonlinear/ISAM2UpdateParams.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/nonlinear/NonlinearFactor.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/nonlinear/NonlinearFactorGraph.h
 CMakeFiles/data_loader.dir/src/data_loader.cpp.o: /usr/local/include/gtsam/nonlinear/NonlinearOptimizer.h

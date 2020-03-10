@@ -4,45 +4,56 @@
 #include <gtsam/nonlinear/GaussNewtonOptimizer.h>
 #include <gtsam/slam/PriorFactor.h>
 #include <gtsam/geometry/Pose2.h>
+#include <gtsam/nonlinear/ISAM2.h>
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <optional>
+#include <functional>
 using namespace std;
 using namespace gtsam;
 
-pair<NonlinearFactorGraph::shared_ptr, Values::shared_ptr> dataloader(int block, string file) {
+bool dataloader(string file,  NonlinearFactorGraph::shared_ptr & graph, Values::shared_ptr& initial, int start, int end = -1) {
   ifstream is(file.c_str());
-  if (block == -1) block = INT_MAX;
-  while(!is.eof()) {
-    string buffer_file_name = "temp.txt";
-    ofstream buffer_file;
-    buffer_file.open(buffer_file_name);
+  if (end == -1) end = INT_MAX;
 
-    for (int i = 0; i < block && !is.eof(); ++i) {
-      string buffer;
-      getline(is, buffer);
-      buffer += "\n";
-      buffer_file << buffer;
-    }
-    buffer_file.close();
-    NonlinearFactorGraph::shared_ptr graph;
-    Values::shared_ptr initial;
-    bool is3D = false;
-    boost::tie(graph, initial) = readG2o(buffer_file_name);
-    string write = "written.txt";
-    //graph.get()->print();
-    writeG2o(*(graph.get()), *(initial.get()), write);
-    cout << "aaa" << endl;
-    return make_pair(graph, initial);
+  string buffer_file_name = "temp.txt";
+  ofstream buffer_file;
+  buffer_file.open(buffer_file_name);
+  int i = 0;
+  string buffer;
+  for (; i < start; ++i) {
+    if (is.eof()) return false;
+    getline(is, buffer);
   }
+  for (; i < end && !is.eof(); ++i) {
+
+    getline(is, buffer);
+    buffer += "\n";
+    buffer_file << buffer;
+  }
+  buffer_file.close();
+
+  bool is3D = false;
+  boost::tie(graph, initial) = readG2o(buffer_file_name);
+  return true;
 
 }
+
+void print_values(Values values) {
+  for(auto key_value = values.begin(); key_value != values.end(); ++key_value) {
+    auto p = key_value->value.cast<Pose2>();
+    cout << p.x() << " " << p.y() <<" " <<p.theta() << endl;
+    cout << "\n";
+  }
+}
+
 void one_b() {
   string file = "control.g2o";
   //pair<NonlinearFactorGraph::shared_ptr, Values::shared_ptr> res = dataloader(-1, file);
   NonlinearFactorGraph::shared_ptr graph;
   Values::shared_ptr initial;
-  boost::tie(graph, initial) = readG2o(file);
+  dataloader(file, graph, initial, 0);
 
   GaussNewtonParams parameters;
   // Stop iterating once the change in error between steps is less than this value
@@ -55,16 +66,49 @@ void one_b() {
   graphWithPrior.add(PriorFactor<Pose2>(0, Pose2(), priorModel));
 
   auto opt = GaussNewtonOptimizer (graphWithPrior, *initial, parameters).optimize();
+  print_values(opt);
 
-  for(auto key_value = opt.begin(); key_value != opt.end(); ++key_value) {
-    auto p = key_value->value.cast<Pose2>();
+}
 
-    cout << p.x() << " " << p.y() <<" " <<p.theta() << endl;
-    cout << "\n";
+void one_c() {
+  ISAM2Params parameters;
+  parameters.relinearizeThreshold = 0.01;
+  parameters.relinearizeSkip = 1;
+  parameters.cacheLinearizedFactors = false;
+  parameters.enableDetailedResults = true;
+  ISAM2 isam(parameters);
+
+
+  int pointer = 0;
+  int flag = true;
+  NonlinearFactorGraph::shared_ptr graph;
+  Values::shared_ptr initial;
+  string file = "control.g2o";
+  while(dataloader(file,graph, initial, pointer, pointer + 50) == true) {
+
+    //pair<NonlinearFactorGraph::shared_ptr, Values::shared_ptr> res = dataloader(-1, file);
+
+    dataloader(file, graph, initial, pointer, pointer + 50);
+
+    if (pointer == 0) {
+
+      noiseModel::Diagonal::shared_ptr priorModel = //
+          noiseModel::Diagonal::Variances(Vector3(1e-6, 1e-6, 1e-8));
+      graph->add(PriorFactor<Pose2>(0, Pose2(), priorModel));
+    }
+    //isam.update(*graph, *initial);
+    //isam.update();
+    //Values result = isam.calculateEstimate();
+    //result.print();
+    cout << pointer << endl;
+    //print_values(result);
+    pointer += 50;
+
   }
+
 }
 int main() {
   one_b();
-
+  //one_c();
   return 0;
 }

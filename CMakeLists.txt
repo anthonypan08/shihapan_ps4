@@ -2,7 +2,7 @@ SET(PROJECT_NAME POSE_GRAPH)
 
 PROJECT(${PROJECT_NAME})
 cmake_minimum_required(VERSION 3.5.1)
-
+set (CMAKE_CXX_STANDARD 17)
 if(COMPILER_SUPPORTS_CXX17)
     message(STATUS "Using C++ 17")
     add_compile_options(-std=c++17)

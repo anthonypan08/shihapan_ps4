@@ -19,10 +19,16 @@ gtsam/slam/PriorFactor.h
 -
 gtsam/geometry/Pose2.h
 -
+gtsam/nonlinear/ISAM2.h
+-
 iostream
 -
 fstream
 -
 string
+-
+optional
+-
+functional
 -
 
