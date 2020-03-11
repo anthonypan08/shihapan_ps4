@@ -27,8 +27,6 @@ fstream
 -
 string
 -
-optional
--
-functional
+vector
 -
 
