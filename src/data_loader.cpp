@@ -47,7 +47,6 @@ public:
     for(auto key_value = values.begin(); key_value != values.end(); ++key_value) {
       auto p = key_value->value.cast<Pose2>();
       cout << p.x() << " " << p.y() <<" " <<p.theta() << endl;
-      cout << "\n";
     }
   }
 tuple<deque<vertex>, deque<edge>, unordered_map<string, edge>> dataloader(string file) {
@@ -147,9 +146,6 @@ void one_b() {
   //initial -> print();
   auto opt = GaussNewtonOptimizer (graphWithPrior, *initial, parameters).optimize();
   print_values(opt);
-  auto p = initial->begin()->value.cast<Pose2>();
-  cout << p.x() << " " << p.y() <<" " <<p.theta() << endl;
-
 }
 
 noiseModel::Gaussian::shared_ptr buildNoise(vector<double> noiseVec) {
