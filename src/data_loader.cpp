@@ -89,13 +89,42 @@ tuple<deque<vertex>, deque<edge>, unordered_map<string, edge>> dataloader(string
   return make_tuple(vertexList, betweenEdgeList, closeLoopList);
 }
 
+string perturb(string file) {
+  string modifiedFileName = "modified.txt";
+  ofstream modified;
+  ifstream is;
+  string temp = "";
+
+  is.open(file);
+  modified.open(modifiedFileName);
+
+  while(!is.eof()) {
+    getline(is, temp);
+
+    if (temp.find(" ") == string::npos) break;
+
+
+    if (temp.find("VERTEX") != string::npos){
+      vector<string> v = split_string(temp);
+      v[2] = to_string(stod(v[2]) + ((double) rand() / (RAND_MAX)));
+      v[3] = to_string(stod(v[3]) + ((double) rand() / (RAND_MAX)));
+      v[4] = to_string(stod(v[4]) + ((double) rand() / (RAND_MAX)));
+      temp = "";
+      for (auto i : v) {
+        temp += i + " ";
+      }
+    }
+    modified << temp + "\n";
+  }
+  return modifiedFileName;
+}
 
 void one_b() {
 
-  string file = "control.g2o";
   //pair<NonlinearFactorGraph::shared_ptr, Values::shared_ptr> res = dataloader(-1, file);
   NonlinearFactorGraph::shared_ptr graph;
   Values::shared_ptr initial;
+  string file = perturb("control.g2o");
   boost::tie(graph, initial) = readG2o(file);
 
   GaussNewtonParams parameters;
@@ -107,8 +136,6 @@ void one_b() {
   noiseModel::Diagonal::shared_ptr priorModel = //
       noiseModel::Diagonal::Variances(Vector3(1, 1, 1));
 
-
-
   graphWithPrior.add(PriorFactor<Pose2>(0, initial->begin()->value.cast<Pose2>(), priorModel));
   for(size_t i = 0; i < initial->size(); ++i) {
     auto cur = initial->at<Pose2>(i);
@@ -119,9 +146,18 @@ void one_b() {
   }
   //initial -> print();
   auto opt = GaussNewtonOptimizer (graphWithPrior, *initial, parameters).optimize();
-  //print_values(opt);
+  print_values(opt);
   auto p = initial->begin()->value.cast<Pose2>();
   cout << p.x() << " " << p.y() <<" " <<p.theta() << endl;
+
+}
+
+noiseModel::Gaussian::shared_ptr buildNoise(vector<double> noiseVec) {
+  string s = "";
+  Matrix noise = (Matrix(3,3) << noiseVec[0], noiseVec[1], noiseVec[2], noiseVec[1],noiseVec[3], noiseVec[4], noiseVec[2], noiseVec[4], noiseVec[5]).finished();
+
+  noiseModel::Gaussian::shared_ptr ret_noise = noiseModel::Gaussian::Information(noise);
+  return ret_noise;
 
 }
 
@@ -140,13 +176,43 @@ void one_c() {
   unordered_map<string, edge>& closeLoopList = get<2>(vertexAndEdges);
 
   NonlinearFactorGraph graph;
-  Values::shared_ptr initial;
-  noiseModel::Diagonal::shared_ptr priorNoise = noiseModel::Diagonal::Sigmas(Vector3(0.3, 0.3, 0.1));
-  graph.emplace_shared<PriorFactor<Pose2>>(0, Pose2(vertexList.x, vertexList.y, vertexList.theta), priorNoise);
-  cout << "abc" << endl;
+  Values initial;
 
-  for (int i = 1; i < vertexList; ++ i) {
-    cout << i.x << endl;
+  graph.emplace_shared<PriorFactor<Pose2>>(0, Pose2(vertexList[0].x, vertexList[0].y, vertexList[0].theta), noiseModel::Diagonal::Variances(Vector3(1, 1, 1)));
+
+  for (size_t i = 0; i < vertexList.size(); ++ i) {
+
+    initial.insert(i, Pose2(vertexList[i].x, vertexList[i].y, vertexList[i].theta));
+    if (i == 0) {
+
+      isam.update(graph, initial);
+      graph.resize(0);
+      initial.clear();
+      continue;
+    }
+
+    edge betweenEdge = betweenEdgeList[i - 1];
+    Pose2 betweenPose = Pose2(betweenEdge.x, betweenEdge.y, betweenEdge.theta);
+
+    graph.emplace_shared<BetweenFactor<Pose2> >(betweenEdge.start, betweenEdge.end, betweenPose, buildNoise(betweenEdge.noise));
+
+    for (size_t j = 0; j < i; ++j) {
+      if (closeLoopList.find(to_string(j) + " " + to_string(i)) != closeLoopList.end()) {
+        cout << j << " " << i << endl;
+        edge closeLoopEdge = closeLoopList[to_string(j) + " " + to_string(i)];
+        Pose2 closeLoopPose = Pose2(closeLoopEdge.x, closeLoopEdge.y, closeLoopEdge.theta);
+        graph.emplace_shared<BetweenFactor<Pose2> >(j, i, closeLoopPose, buildNoise(closeLoopEdge.noise));
+      }
+    }
+    //print_values(initial);
+
+    isam.update(graph, initial);
+    isam.update();
+    Values currentEstimate = isam.calculateEstimate();
+
+
+    graph.resize(0);
+    initial.clear();
   }
 
 
@@ -156,8 +222,8 @@ void one_c() {
 };
 int main() {
   Q1 q1 = Q1();
-  //q1.one_b();
-  q1.one_c();
+  q1.one_b();
+  //q1.one_c();
 
   return 0;
 }
