@@ -105,9 +105,10 @@ string perturb(string file) {
 
     if (temp.find("VERTEX") != string::npos){
       vector<string> v = split_string(temp);
-      v[2] = to_string(stod(v[2]) + ((double) rand() / (RAND_MAX)));
-      v[3] = to_string(stod(v[3]) + ((double) rand() / (RAND_MAX)));
-      v[4] = to_string(stod(v[4]) + ((double) rand() / (RAND_MAX)));
+      srand(time(NULL));
+      v[2] = to_string(stod(v[2]) + ((double) rand() / (RAND_MAX)) * 10);
+      v[3] = to_string(stod(v[3]) + ((double) rand() / (RAND_MAX)) * 10);
+      v[4] = to_string(stod(v[4]) + ((double) rand() / (RAND_MAX)) * 10);
       temp = "";
       for (auto i : v) {
         temp += i + " ";
@@ -133,16 +134,10 @@ void one_b() {
   parameters.maxIterations = 100;
   NonlinearFactorGraph graphWithPrior = *graph;
   noiseModel::Diagonal::shared_ptr priorModel = //
-      noiseModel::Diagonal::Variances(Vector3(1, 1, 1));
+      noiseModel::Diagonal::Variances(Vector3(0.3, 0.3, 0.5));
 
   graphWithPrior.add(PriorFactor<Pose2>(0, initial->begin()->value.cast<Pose2>(), priorModel));
-  for(size_t i = 0; i < initial->size(); ++i) {
-    auto cur = initial->at<Pose2>(i);
-    Pose2 dummy = Pose2(cur.x() * 1.0, cur.y() * 1.0, cur.theta() * 1.0);
-    initial -> erase(i);
-    initial -> insert(i, dummy);
 
-  }
   //initial -> print();
   auto opt = GaussNewtonOptimizer (graphWithPrior, *initial, parameters).optimize();
   print_values(opt);
