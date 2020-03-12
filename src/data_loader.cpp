@@ -171,7 +171,7 @@ void one_c() {
   Values initial;
 
   graph.emplace_shared<PriorFactor<Pose2>>(0, Pose2(vertexList[0].x, vertexList[0].y, vertexList[0].theta), noiseModel::Diagonal::Variances(Vector3(1, 1, 1)));
-
+  Values currentEstimate;
   for (size_t i = 0; i < vertexList.size(); ++ i) {
 
     initial.insert(i, Pose2(vertexList[i].x, vertexList[i].y, vertexList[i].theta));
@@ -190,7 +190,6 @@ void one_c() {
 
     for (size_t j = 0; j < i; ++j) {
       if (closeLoopList.find(to_string(j) + " " + to_string(i)) != closeLoopList.end()) {
-        cout << j << " " << i << endl;
         edge closeLoopEdge = closeLoopList[to_string(j) + " " + to_string(i)];
         Pose2 closeLoopPose = Pose2(closeLoopEdge.x, closeLoopEdge.y, closeLoopEdge.theta);
         graph.emplace_shared<BetweenFactor<Pose2> >(j, i, closeLoopPose, buildNoise(closeLoopEdge.noise));
@@ -200,13 +199,13 @@ void one_c() {
 
     isam.update(graph, initial);
     isam.update();
-    Values currentEstimate = isam.calculateEstimate();
+    currentEstimate = isam.calculateEstimate();
 
 
     graph.resize(0);
     initial.clear();
   }
-
+  print_values(currentEstimate);
 
 
 
@@ -215,8 +214,8 @@ void one_c() {
 int main() {
   srand(time(NULL));
   Q1 q1 = Q1();
-  q1.one_b();
-  //q1.one_c();
+  //q1.one_b();
+  q1.one_c();
 
   return 0;
 }
