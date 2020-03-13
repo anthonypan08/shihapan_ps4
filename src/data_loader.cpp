@@ -215,25 +215,24 @@ public:
 
       string file = perturb("3D_control.g2o", "modified_3D.txt");
       bool is3D = true;
-      boost::tie(graph, initial) = readG2o(file, is3D);
-      cout << "read" << endl;
+      boost::tie(graph, initial) = readG2o("3D_control.g2o", is3D);
+
       GaussNewtonParams parameters;
       // Stop iterating once the change in error between steps is less than this value
-      parameters.relativeErrorTol = 1e-3;
-      // Do not perform more than N iteration steps
-      parameters.maxIterations = 50;
+      parameters.setVerbosity("TERMINATION");
+
       NonlinearFactorGraph graphWithPrior = *graph;
       noiseModel::Diagonal::shared_ptr priorModel = //
-          noiseModel::Diagonal::Variances((Vector(6) << 0.1, 0.1, 0.1, 0.3, 0.3, 0.3).finished());
-      cout << "noise" << endl;
+          noiseModel::Diagonal::Variances((Vector(6) << 0.09, 0.09, 0.09, 0.05, 0.05, 0.05).finished());
+
       graphWithPrior.add(PriorFactor<Pose3>(0, initial->begin()->value.cast<Pose3>(), priorModel));
-      cout << "prepped" << endl;
+
       //initial -> print();
 
 
       auto opt = GaussNewtonOptimizer (graphWithPrior, *initial, parameters).optimize();
       cout << "optimized" << endl;
-      print_values(*initial);
+      print_values(opt);
   }
 };
 int main() {
