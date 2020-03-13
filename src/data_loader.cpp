@@ -13,21 +13,6 @@ using namespace std;
 using namespace gtsam;
 class common_functions {
 public:
-  vector<string> split_string(string str) {
-   vector<string> v;
-
-   char cstring[str.size() + 1];
-   strcpy(cstring, str.c_str());
-   char* pch = strtok (cstring," ");
-   while (pch != NULL)
-   {
-     v.push_back(pch);
-     pch = strtok (NULL, " ");
-   }
-   return v;
-  }
-};
-class Q1: public common_functions {
   struct vertex {
     double x;
     double y;
@@ -42,13 +27,59 @@ class Q1: public common_functions {
     double theta;
     vector<double> noise;
   };
-public:
+  vector<string> split_string(string str) {
+   vector<string> v;
+
+   char cstring[str.size() + 1];
+   strcpy(cstring, str.c_str());
+   char* pch = strtok (cstring," ");
+   while (pch != NULL)
+   {
+     v.push_back(pch);
+     pch = strtok (NULL, " ");
+   }
+   return v;
+  }
   void print_values(Values values) {
     for(auto key_value = values.begin(); key_value != values.end(); ++key_value) {
-      auto p = key_value->value.cast<Pose2>();
-      cout << p.x() << " " << p.y() <<" " <<p.theta() << endl;
+      auto p = key_value->value.cast<Pose3>();
+      cout << p.x() << " " << p.y() <<" " <<p.z() << endl;
     }
   }
+  string perturb(string file, string modifiedFileName, string type = "VERTEX") {
+
+    ofstream modified;
+    ifstream is;
+    string temp = "";
+
+    is.open(file);
+    modified.open(modifiedFileName);
+
+    while(!is.eof()) {
+      getline(is, temp);
+      if (temp.find(" ") == string::npos) break;
+      if (temp.find(type) != string::npos){
+
+        vector<string> v = split_string(temp);
+        for (size_t i = 2; i < v.size(); ++i) {
+
+          v[i] = to_string(stod(v[i]) + ((double) rand() / (RAND_MAX) * 1)); // perturb the initial state
+        }
+        temp = "";
+        for (auto i : v) {
+          temp += i + " ";
+        }
+      }
+      modified << temp + "\n";
+    }
+
+    return modifiedFileName;
+  }
+};
+class Q1: public common_functions {
+
+public:
+
 tuple<deque<vertex>, deque<edge>, unordered_map<string, edge>> dataloader(string file) {
   ifstream is;
   ofstream vertex_output;
@@ -88,45 +119,19 @@ tuple<deque<vertex>, deque<edge>, unordered_map<string, edge>> dataloader(string
   return make_tuple(vertexList, betweenEdgeList, closeLoopList);
 }
 
-string perturb(string file) {
-  string modifiedFileName = "modified.txt";
-  ofstream modified;
-  ifstream is;
-  string temp = "";
 
-  is.open(file);
-  modified.open(modifiedFileName);
-
-  while(!is.eof()) {
-    getline(is, temp);
-
-    if (temp.find(" ") == string::npos) break;
-
-
-    if (temp.find("VERTEX") != string::npos){
-      vector<string> v = split_string(temp);
-
-      v[2] = to_string(stod(v[2]) + ((double) rand() / (RAND_MAX)));
-      v[3] = to_string(stod(v[3]) + ((double) rand() / (RAND_MAX)));
-      v[4] = to_string(stod(v[4]) + ((double) rand() / (RAND_MAX)));
-      temp = "";
-      for (auto i : v) {
-        temp += i + " ";
-      }
-    }
-    modified << temp + "\n";
-  }
-  return modifiedFileName;
-}
 
 void one_b() {
 
   //pair<NonlinearFactorGraph::shared_ptr, Values::shared_ptr> res = dataloader(-1, file);
   NonlinearFactorGraph::shared_ptr graph;
   Values::shared_ptr initial;
-  string file = perturb("control.g2o");
-  boost::tie(graph, initial) = readG2o(file);
+  //string file = perturb("control.g2o");
 
+  string file = perturb("control.g2o", "modified.txt");
+  bool is3D = false;
+  boost::tie(graph, initial) = readG2o(file, is3D);
+  cout << "read" << endl;
   GaussNewtonParams parameters;
   // Stop iterating once the change in error between steps is less than this value
   parameters.relativeErrorTol = 1e-5;
@@ -135,12 +140,9 @@ void one_b() {
   NonlinearFactorGraph graphWithPrior = *graph;
   noiseModel::Diagonal::shared_ptr priorModel = //
       noiseModel::Diagonal::Variances(Vector3(0.1, 0.1, 0.3));
-
   graphWithPrior.add(PriorFactor<Pose2>(0, initial->begin()->value.cast<Pose2>(), priorModel));
 
-  //initial -> print();
   auto opt = GaussNewtonOptimizer (graphWithPrior, *initial, parameters).optimize();
-
   print_values(opt);
 }
 
@@ -154,68 +156,95 @@ noiseModel::Gaussian::shared_ptr buildNoise(vector<double> noiseVec) {
 }
 
 void one_c() {
-  string file = "control.g2o";
-  ISAM2Params parameters;
-  parameters.relinearizeThreshold = 0.01;
-  parameters.relinearizeSkip = 1;
-  parameters.cacheLinearizedFactors = false;
-  parameters.enableDetailedResults = true;
-  ISAM2 isam(parameters);
+    string file = "control.g2o";
+    ISAM2Params parameters;
+    parameters.relinearizeThreshold = 0.01;
+    parameters.relinearizeSkip = 1;
+    parameters.cacheLinearizedFactors = false;
+    parameters.enableDetailedResults = true;
+    ISAM2 isam(parameters);
+    tuple<deque<vertex>, deque<edge>, unordered_map<string, edge>> vertexAndEdges = dataloader(file);
+    deque<vertex>& vertexList = get<0>(vertexAndEdges);
+    deque<edge>& betweenEdgeList = get<1>(vertexAndEdges);
+    unordered_map<string, edge>& closeLoopList = get<2>(vertexAndEdges);
+    NonlinearFactorGraph graph;
+    Values initial;
+    graph.emplace_shared<PriorFactor<Pose2>>(0, Pose2(vertexList[0].x, vertexList[0].y, vertexList[0].theta), noiseModel::Diagonal::Variances(Vector3(1, 1, 1)));
+    Values currentEstimate;
+    for (size_t i = 0; i < vertexList.size(); ++ i) {
+      initial.insert(i, Pose2(vertexList[i].x, vertexList[i].y, vertexList[i].theta));
+      if (i == 0) {
+        isam.update(graph, initial);
+        graph.resize(0);
+        initial.clear();
+        continue;
+      }
+      edge betweenEdge = betweenEdgeList[i - 1];
+      Pose2 betweenPose = Pose2(betweenEdge.x, betweenEdge.y, betweenEdge.theta);
 
-  tuple<deque<vertex>, deque<edge>, unordered_map<string, edge>> vertexAndEdges = dataloader(file);
-  deque<vertex>& vertexList = get<0>(vertexAndEdges);
-  deque<edge>& betweenEdgeList = get<1>(vertexAndEdges);
-  unordered_map<string, edge>& closeLoopList = get<2>(vertexAndEdges);
+      graph.emplace_shared<BetweenFactor<Pose2> >(betweenEdge.start, betweenEdge.end, betweenPose, buildNoise(betweenEdge.noise));
 
-  NonlinearFactorGraph graph;
-  Values initial;
-
-  graph.emplace_shared<PriorFactor<Pose2>>(0, Pose2(vertexList[0].x, vertexList[0].y, vertexList[0].theta), noiseModel::Diagonal::Variances(Vector3(1, 1, 1)));
-  Values currentEstimate;
-  for (size_t i = 0; i < vertexList.size(); ++ i) {
-
-    initial.insert(i, Pose2(vertexList[i].x, vertexList[i].y, vertexList[i].theta));
-    if (i == 0) {
+      for (size_t j = 0; j < i; ++j) {
+        if (closeLoopList.find(to_string(j) + " " + to_string(i)) != closeLoopList.end()) {
+          edge closeLoopEdge = closeLoopList[to_string(j) + " " + to_string(i)];
+          Pose2 closeLoopPose = Pose2(closeLoopEdge.x, closeLoopEdge.y, closeLoopEdge.theta);
+          graph.emplace_shared<BetweenFactor<Pose2> >(j, i, closeLoopPose, buildNoise(closeLoopEdge.noise));
+        }
+      }
+      //print_values(initial);
 
       isam.update(graph, initial);
+      isam.update();
+      currentEstimate = isam.calculateEstimate();
+
+
       graph.resize(0);
       initial.clear();
-      continue;
     }
-
-    edge betweenEdge = betweenEdgeList[i - 1];
-    Pose2 betweenPose = Pose2(betweenEdge.x, betweenEdge.y, betweenEdge.theta);
-
-    graph.emplace_shared<BetweenFactor<Pose2> >(betweenEdge.start, betweenEdge.end, betweenPose, buildNoise(betweenEdge.noise));
-
-    for (size_t j = 0; j < i; ++j) {
-      if (closeLoopList.find(to_string(j) + " " + to_string(i)) != closeLoopList.end()) {
-        edge closeLoopEdge = closeLoopList[to_string(j) + " " + to_string(i)];
-        Pose2 closeLoopPose = Pose2(closeLoopEdge.x, closeLoopEdge.y, closeLoopEdge.theta);
-        graph.emplace_shared<BetweenFactor<Pose2> >(j, i, closeLoopPose, buildNoise(closeLoopEdge.noise));
-      }
-    }
-    //print_values(initial);
-
-    isam.update(graph, initial);
-    isam.update();
-    currentEstimate = isam.calculateEstimate();
-
-
-    graph.resize(0);
-    initial.clear();
+    print_values(currentEstimate);
   }
-  print_values(currentEstimate);
-
-
-
 };
+class Q2 : public common_functions {
+public:
+  void two_b() {
+
+      //pair<NonlinearFactorGraph::shared_ptr, Values::shared_ptr> res = dataloader(-1, file);
+      NonlinearFactorGraph::shared_ptr graph;
+      Values::shared_ptr initial;
+      //string file = perturb("control.g2o");
+
+      string file = perturb("3D_control.g2o", "modified_3D.txt");
+      bool is3D = true;
+      boost::tie(graph, initial) = readG2o(file, is3D);
+      cout << "read" << endl;
+      GaussNewtonParams parameters;
+      // Stop iterating once the change in error between steps is less than this value
+      parameters.relativeErrorTol = 1e-3;
+      // Do not perform more than N iteration steps
+      parameters.maxIterations = 50;
+      NonlinearFactorGraph graphWithPrior = *graph;
+      noiseModel::Diagonal::shared_ptr priorModel = //
+          noiseModel::Diagonal::Variances((Vector(6) << 0.1, 0.1, 0.1, 0.3, 0.3, 0.3).finished());
+      cout << "noise" << endl;
+      graphWithPrior.add(PriorFactor<Pose3>(0, initial->begin()->value.cast<Pose3>(), priorModel));
+      cout << "prepped" << endl;
+      //initial -> print();
+
+
+      auto opt = GaussNewtonOptimizer (graphWithPrior, *initial, parameters).optimize();
+      cout << "optimized" << endl;
+      print_values(*initial);
+  }
 };
 int main() {
   srand(time(NULL));
   Q1 q1 = Q1();
   //q1.one_b();
-  q1.one_c();
+  //q1.one_c();
+
+  Q2 q2 = Q2();
+  q2.two_b();
+
 
   return 0;
 }
