@@ -218,8 +218,7 @@ public:
       boost::tie(graph, initial) = readG2o("3D_control.g2o", is3D);
 
       GaussNewtonParams parameters;
-      // Stop iterating once the change in error between steps is less than this value
-      parameters.setVerbosity("TERMINATION");
+
 
       NonlinearFactorGraph graphWithPrior = *graph;
       noiseModel::Diagonal::shared_ptr priorModel = //
@@ -231,7 +230,7 @@ public:
 
 
       auto opt = GaussNewtonOptimizer (graphWithPrior, *initial, parameters).optimize();
-      cout << "optimized" << endl;
+      
       print_values(opt);
   }
 };
