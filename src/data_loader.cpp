@@ -19,12 +19,35 @@ public:
     double theta;
   };
 
+  struct vertex_3d {
+    double x;
+    double y;
+    double z;
+    double rot_x;
+    double rot_y;
+    double rot_z;
+    double rot_w;
+  };
+
   struct edge {
     int start;
     int end;
     double x;
     double y;
     double theta;
+    vector<double> noise;
+  };
+
+  struct edge_3d {
+    int start;
+    int end;
+    double x;
+    double y;
+    double z;
+    double rot_x;
+    double rot_y;
+    double rot_z;
+    double rot_w;
     vector<double> noise;
   };
   vector<string> split_string(string str) {
@@ -40,12 +63,7 @@ public:
    }
    return v;
   }
-  void print_values(Values values) {
-    for(auto key_value = values.begin(); key_value != values.end(); ++key_value) {
-      auto p = key_value->value.cast<Pose3>();
-      cout << p.x() << " " << p.y() <<" " <<p.z() << endl;
-    }
-  }
+
   string perturb(string file, string modifiedFileName, string type = "VERTEX") {
 
     ofstream modified;
@@ -75,6 +93,37 @@ public:
 
     return modifiedFileName;
   }
+
+  int triangle_sum(int row, int col, int matSize) {
+    int idx = 0;
+    for (int i = 0; i < row; ++i) {
+      idx += (matSize - i);
+    }
+    idx += (col - row);
+
+    return idx;
+  }
+
+  noiseModel::Gaussian::shared_ptr buildNoise(vector<double> noiseVec, int matSize = 3) {
+
+    string s = "";
+    Matrix noise = Matrix(matSize, matSize);
+    for (int i = 0; i < matSize; ++i) {
+      for (int j = 0; j < matSize; ++j) {
+        int temp_i = i;
+        int temp_j = j;
+        if (temp_i > temp_j) swap(temp_i, temp_j);
+        noise(i, j) =  noiseVec[triangle_sum(temp_i, temp_j, matSize)];
+
+      }
+    }
+
+    noiseModel::Gaussian::shared_ptr ret_noise = noiseModel::Gaussian::Information(noise);
+    return ret_noise;
+
+  }
+
+
 };
 class Q1: public common_functions {
 
@@ -100,7 +149,9 @@ tuple<deque<vertex>, deque<edge>, unordered_map<string, edge>> dataloader(string
     if (temp.find(" ") == string::npos) break;
     vector<string> v = split_string(temp);
     if (temp.find("VERTEX") != string::npos){
+
       vertex_output << temp + "\n";
+
       vertexList.push_back(vertex{stod(v[2]), stod(v[3]), stod(v[4])});
     } else if (stoi(v[1]) + 1 == stoi(v[2])) {
       vector<double> noiseTemp = vector<double>{stod(v[6]), stod(v[7]), stod(v[8]), stod(v[9]), stod(v[10]), stod(v[11])};
@@ -119,8 +170,13 @@ tuple<deque<vertex>, deque<edge>, unordered_map<string, edge>> dataloader(string
   return make_tuple(vertexList, betweenEdgeList, closeLoopList);
 }
 
+void print_values(Values values) {
+  for(auto key_value = values.begin(); key_value != values.end(); ++key_value) {
+    auto p = key_value->value.cast<Pose2>();
+    cout << p.x() << " " << p.y() << endl;
 
-
+  }
+}
 void one_b() {
 
   //pair<NonlinearFactorGraph::shared_ptr, Values::shared_ptr> res = dataloader(-1, file);
@@ -131,7 +187,7 @@ void one_b() {
   string file = perturb("control.g2o", "modified.txt");
   bool is3D = false;
   boost::tie(graph, initial) = readG2o(file, is3D);
-  cout << "read" << endl;
+
   GaussNewtonParams parameters;
   // Stop iterating once the change in error between steps is less than this value
   parameters.relativeErrorTol = 1e-5;
@@ -144,15 +200,6 @@ void one_b() {
 
   auto opt = GaussNewtonOptimizer (graphWithPrior, *initial, parameters).optimize();
   print_values(opt);
-}
-
-noiseModel::Gaussian::shared_ptr buildNoise(vector<double> noiseVec) {
-  string s = "";
-  Matrix noise = (Matrix(3,3) << noiseVec[0], noiseVec[1], noiseVec[2], noiseVec[1],noiseVec[3], noiseVec[4], noiseVec[2], noiseVec[4], noiseVec[5]).finished();
-
-  noiseModel::Gaussian::shared_ptr ret_noise = noiseModel::Gaussian::Information(noise);
-  return ret_noise;
-
 }
 
 void one_c() {
@@ -192,12 +239,9 @@ void one_c() {
         }
       }
       //print_values(initial);
-
       isam.update(graph, initial);
       isam.update();
       currentEstimate = isam.calculateEstimate();
-
-
       graph.resize(0);
       initial.clear();
     }
@@ -206,6 +250,13 @@ void one_c() {
 };
 class Q2 : public common_functions {
 public:
+  void print_values(Values values) {
+    for(auto key_value = values.begin(); key_value != values.end(); ++key_value) {
+      auto p = key_value->value.cast<Pose3>();
+      cout << p.x() << " " << p.y() <<" " <<p.z() << endl;
+
+    }
+  }
   void two_b() {
 
       //pair<NonlinearFactorGraph::shared_ptr, Values::shared_ptr> res = dataloader(-1, file);
@@ -226,13 +277,114 @@ public:
 
       graphWithPrior.add(PriorFactor<Pose3>(0, initial->begin()->value.cast<Pose3>(), priorModel));
 
-      //initial -> print();
-
-
       auto opt = GaussNewtonOptimizer (graphWithPrior, *initial, parameters).optimize();
-      
+
       print_values(opt);
   }
+  tuple<deque<vertex_3d>, deque<edge_3d>, unordered_map<string, edge_3d>> dataloader(string file) {
+    ifstream is;
+    ofstream vertex_output;
+    ofstream between_output;
+    ofstream close_loop_output;
+    string temp = "";
+    deque<vertex_3d> vertexList;
+    deque<edge_3d> betweenEdgeList;
+    unordered_map<string, edge_3d> closeLoopList;
+
+    is.open(file);
+    vertex_output.open("vertex_3D.txt");
+    between_output.open("between_3D.txt");
+    close_loop_output.open("close_loop_3D.txt");
+    while(!is.eof()) {
+      getline(is, temp);
+
+      if (temp.find(" ") == string::npos) break;
+      vector<string> v = split_string(temp);
+      if (temp.find("VERTEX") != string::npos){
+
+        vertex_output << temp + "\n";
+
+        vertexList.push_back(vertex_3d{stod(v[2]), stod(v[3]), stod(v[4]), stod(v[5]), stod(v[6]), stod(v[7]), stod(v[8])});
+      } else if (stoi(v[1]) + 1 == stoi(v[2])) {
+        vector<double> noiseTemp;
+
+        noiseTemp.resize(v.size() - 10);
+
+        transform(v.begin() + 10, v.end(), noiseTemp.begin(), [](const string& val){return stod(val);});
+        betweenEdgeList.push_back(edge_3d{stoi(v[1]), stoi(v[2]), stod(v[3]), stod(v[4]), stod(v[5]), stod(v[6]), stod(v[7]), stod(v[8]), stod(v[9]), noiseTemp});
+        between_output << temp + "\n";
+      } else {
+        vector<double> noiseTemp;
+        noiseTemp.resize(v.size() - 10);
+
+        transform(v.begin() + 10, v.end(), noiseTemp.begin(), [](const string& val){return stod(val);});
+
+        closeLoopList[v[1] + " " + v[2]] = edge_3d{stoi(v[1]), stoi(v[2]), stod(v[3]), stod(v[4]), stod(v[5]), stod(v[6]), stod(v[7]), stod(v[8]), stod(v[9]), noiseTemp};
+        close_loop_output << temp + "\n";
+      }
+
+    }
+
+    vertex_output.close();
+    between_output.close();
+    close_loop_output.close();
+    return make_tuple(vertexList, betweenEdgeList, closeLoopList);
+  }
+  void two_c() {
+      string file = "3D_control.g2o";
+      ISAM2Params parameters;
+      parameters.relinearizeThreshold = 0.01;
+      parameters.relinearizeSkip = 1;
+      parameters.cacheLinearizedFactors = false;
+      parameters.enableDetailedResults = true;
+      ISAM2 isam(parameters);
+      tuple<deque<vertex_3d>, deque<edge_3d>, unordered_map<string, edge_3d>> vertexAndEdges = dataloader(file);
+      deque<vertex_3d>& vertexList = get<0>(vertexAndEdges);
+      deque<edge_3d>& betweenEdgeList = get<1>(vertexAndEdges);
+      unordered_map<string, edge_3d>& closeLoopList = get<2>(vertexAndEdges);
+      NonlinearFactorGraph graph;
+      Values initial;
+      noiseModel::Diagonal::shared_ptr priorModel = //
+          noiseModel::Diagonal::Variances((Vector(6) << 0.09, 0.09, 0.09, 0.05, 0.05, 0.05).finished());
+      graph.emplace_shared<PriorFactor<Pose3>>(0, Pose3(Rot3(vertexList[0].rot_w, vertexList[0].rot_x, vertexList[0].rot_y, vertexList[0].rot_z), Point3(vertexList[0].x, vertexList[0].y, vertexList[0].z)), priorModel);
+      Values currentEstimate;
+
+      for (size_t i = 0; i < vertexList.size(); ++ i) {
+        initial.insert(i, Pose3(Rot3(vertexList[i].rot_w, vertexList[i].rot_x, vertexList[i].rot_y, vertexList[i].rot_z), Point3(vertexList[i].x, vertexList[i].y, vertexList[i].z)));
+
+        if (i == 0) {
+
+          isam.update(graph, initial);
+
+          graph.resize(0);
+          initial.clear();
+          continue;
+        }
+        edge_3d betweenEdge = betweenEdgeList[i - 1];
+        Pose3 betweenPose = Pose3(Rot3(betweenEdge.rot_w, betweenEdge.rot_x, betweenEdge.rot_y, betweenEdge.rot_z), Point3(betweenEdge.x, betweenEdge.y, betweenEdge.z));
+
+        graph.emplace_shared<BetweenFactor<Pose3> >(betweenEdge.start, betweenEdge.end, betweenPose, buildNoise(betweenEdge.noise, 6));
+
+        for (size_t j = 0; j < i; ++j) {
+
+          if (closeLoopList.find(to_string(j) + " " + to_string(i)) != closeLoopList.end()) {
+            edge_3d closeLoopEdge = closeLoopList[to_string(j) + " " + to_string(i)];
+            Pose3 closeLoopPose = Pose3(Rot3(closeLoopEdge.rot_w, closeLoopEdge.rot_x, closeLoopEdge.rot_y, closeLoopEdge.rot_z), Point3(closeLoopEdge.x, closeLoopEdge.y, closeLoopEdge.z));
+
+            graph.emplace_shared<BetweenFactor<Pose3> >(j, i, closeLoopPose, buildNoise(closeLoopEdge.noise, 6));
+          }
+        }
+        //print_values(initial);
+
+        isam.update(graph, initial);
+        isam.update();
+        currentEstimate = isam.calculateEstimate();
+        graph.resize(0);
+        initial.clear();
+
+      }
+      print_values(currentEstimate);
+    }
 };
 int main() {
   srand(time(NULL));
@@ -241,8 +393,8 @@ int main() {
   //q1.one_c();
 
   Q2 q2 = Q2();
-  q2.two_b();
-
+  //q2.two_b();
+  q2.two_c();
 
   return 0;
 }
